@@ -39,6 +39,30 @@ spec:
           value: {{ .Values.deployment.sshd.posixMapperResourceID | required "value for .Values.deployment.sshd.posixMapperResourceID is required." }}
         - name: REGISTRY_URL
           value: {{ .Values.deployment.sshd.registryURL }}
+        {{- with .Values.deployment.sshd.oidc }}
+        - name: OIDC_CLIENT_ID
+          value: {{ .clientID }}
+        {{- if .existingSecretname }}
+        {{- $existingSecretName := .existingSecretName -}}
+        {{- $namespace := .Values.skaha.namespace -}}
+        {{- $clientSecret := include "getSecretKeyValue" (list $existingSecretName "clientSecret" $namespace) -}}
+        - name: OIDC_CLIENT_SECRET
+          value: {{ $clientSecret }}
+        {{- else }}
+        - name: OIDC_CLIENT_SECRET
+          value: {{ .clientSecret | required "Missing oidc.clientSecret OR oidc.existingSecretName" }}
+        {{- end }}
+        - name: OIDC_URL
+          value: {{ .url | required "Missing oidc.url" }}
+        {{- end }}
+        {{- with .Values.deployment.sshd.login }}
+        - name: LOGIN_USERNAME
+          value: {{ .username | required "Missing login.username." }}
+        - name: LOGIN_PASSWORD
+          value: {{ .password | required "Missing login.password."  }}
+        - name: LOGIN_URI
+          value: {{ .uri | default "ivo://cadc.nrc.ca/gms"  }}
+        {{- end }}
         volumeMounts:
         - mountPath: "/etc-passwd"
           name: etc-passwd
@@ -46,9 +70,9 @@ spec:
           name: etc-group
         - mountPath: "/init-users-groups"
           name: init-users-groups
-        - mountPath: "/config/keys"
-          name: posix-mapper-api-secret
-          readOnly: true
+        # - mountPath: "/config/keys"
+        #   name: posix-mapper-api-secret
+        #   readOnly: true
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -60,9 +84,33 @@ spec:
         - name: USER_NAME
           value: root
         - name: POSIX_MAPPER_URI
-          value: {{ .Values.deployment.sshd.posixMapperResourceID }}
+          value: {{ .Values.deployment.sshd.posixMapperResourceID | required "value for .Values.deployment.sshd.posixMapperResourceID is required." }}
         - name: REGISTRY_URL
           value: {{ .Values.deployment.sshd.registryURL }}
+        {{- with .Values.deployment.sshd.oidc }}
+        - name: OIDC_CLIENT_ID
+          value: {{ .clientID }}
+        {{- if .existingSecretname }}
+        {{- $existingSecretName := .existingSecretName -}}
+        {{- $namespace := .Values.skaha.namespace -}}
+        {{- $clientSecret := include "getSecretKeyValue" (list $existingSecretName "clientSecret" $namespace) -}}
+        - name: OIDC_CLIENT_SECRET
+          value: {{ $clientSecret }}
+        {{- else }}
+        - name: OIDC_CLIENT_SECRET
+          value: {{ .clientSecret | required "Missing oidc.clientSecret OR oidc.existingSecretName" }}
+        {{- end }}
+        - name: OIDC_URL
+          value: {{ .url | required "Missing oidc.url" }}
+        {{- end }}
+        {{- with .Values.deployment.sshd.login }}
+        - name: LOGIN_USERNAME
+          value: {{ .username | required "Missing login.username." }}
+        - name: LOGIN_PASSWORD
+          value: {{ .password | required "Missing login.password."  }}
+        - name: LOGIN_URI
+          value: {{ .uri | default "ivo://cadc.nrc.ca/gms"  }}
+        {{- end }}
         ports:
         - containerPort: 2222
           protocol: TCP
@@ -81,9 +129,9 @@ spec:
         - containerPort: 2222
           protocol: TCP
         volumeMounts: 
-        - mountPath: "/config/keys"
-          name: posix-mapper-api-secret
-          readOnly: true
+        # - mountPath: "/config/keys"
+        #   name: posix-mapper-api-secret
+        #   readOnly: true
         # Maintain the 'etc-passwd' and 'etc-group' mappings for the init-users-groups script to
         # periodically run.
         - mountPath: "/etc-passwd"
@@ -112,10 +160,10 @@ spec:
         configMap:
           name: {{ .Release.Name}}-init-users-groups-config
           defaultMode: 0777
-      - name: posix-mapper-api-secret
-        secret:
-          defaultMode: 420
-          secretName: posix-mapper-api-secret
+      # - name: posix-mapper-api-secret
+      #   secret:
+      #     defaultMode: 420
+      #     secretName: posix-mapper-api-secret
       - name: etc-group
         emptyDir: {}
       - name: etc-passwd

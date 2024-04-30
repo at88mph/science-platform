@@ -18,6 +18,27 @@ deployment:
         memory: "500Mi"
         cpu: "250m"
 
+    # OpenID Configuration to obtain user information for accounts that will login to SSHD.
+    # Accounts are expected to have a .ssh/authorizedKeys file in the /home/<username> folder.
+    # oidc:
+      # OIDC URL
+      # url:
+      
+      # OIDC Client ID
+      # clientID:
+
+      # Kubernetes secret containing the client secret to avoid a copy and paste.
+      # existingSecretName:
+
+      # OIDC Client Secret, required if existingSecretName is missing.
+      # clientSecret:
+
+    # Legacy CADC ONLY login.
+    # login:
+      # username:
+      # password:
+      # uri: ivo://cadc.nrc.ca/gms
+
     # Name of the Traefik entrypoint to use.
     # entryPoint: sshd
 
