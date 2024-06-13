@@ -1,4 +1,7 @@
-# CHANGELOG for Science Portal UI (Chart 0.2.2)
+# CHANGELOG for Science Portal UI (Chart 0.2.5)
+
+## 2024.06.13 (0.2.5)
+- Cleanup and fix for session logs and events
 
 ## 2023.12.11 (0.2.2)
 - OpenID Connect login support

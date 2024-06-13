@@ -39,7 +39,7 @@ deployment:
     skahaResourceID: ivo://example.org/skaha
 
     # ID (URI) of the GMS Service.
-    gmsID: ivo://skao.int/gms
+    # gmsID: ivo://skao.int/gms
 
     # OIDC (IAM) server configuration.  These are required
     # oidc:
@@ -59,10 +59,10 @@ deployment:
       # The standard OpenID scopes for token requests.  This is required.
       # scope: "openid profile offline_access"
 
-    registryURL: https://spsrc27.iaa.csic.es/reg
+    # registryURL: https://spsrc27.iaa.csic.es/reg
 
     # The IdentityManager class handling authentication.  This should generally be left alone
-    identityManagerClass: org.opencadc.auth.StandardIdentityManager
+    # identityManagerClass: org.opencadc.auth.StandardIdentityManager
 
     # Optionally mount a custom CA certificate
     # extraVolumeMounts:
@@ -77,7 +77,7 @@ deployment:
     #     secretName: science-portal-cacert-secret
 
     # Supported theme name (src or canfar).
-    themeName: src
+    # themeName: src
 
 # secrets:
   # Uncomment to enable local or self-signed CA certificates for your domain to be trusted.
