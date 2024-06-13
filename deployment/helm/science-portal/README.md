@@ -22,6 +22,13 @@ receiving the `code` as part of the authorization code flow, and obtaining a tok
 deployment:
   hostname: example.com # Change this!
   sciencePortal:
+   
+    # The GMS service from the registry
+    gmsID: ivo://example.com/gms
+
+    # Use the src or canfar theme.
+    themeName: {src | canfar}
+
     # OIDC (IAM) server configuration.  These are required
     oidc:
       # Location of the OpenID Provider (OIdP), and where users will login
@@ -56,10 +63,6 @@ deployment:
 
     # The Resource ID of the Service that contains the URL of the Skaha service in the IVOA Registry
     skahaResourceID: ivo://example.org/skaha
-
-    # The logo in the top left.  No link associated, just the image.  This can be relative, or absolute.
-    # Default is the SRCNet Logo.
-    # logoURL: /science-portal/images/SRCNetLogo.png
 
 # secrets:
   # Uncomment to enable local or self-signed CA certificates for your domain to be trusted.
