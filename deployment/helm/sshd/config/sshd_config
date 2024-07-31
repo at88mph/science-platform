@@ -15,7 +15,7 @@
 # semanage port -a -t ssh_port_t -p tcp #PORTNUMBER
 #
 #Port 22
-Port 64022
+Port 2222
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
@@ -135,7 +135,7 @@ Subsystem	sftp	internal-sftp
 
 # Example of overriding settings on a per-user basis
 Match User * 
-ChrootDirectory /arc
+ChrootDirectory {{ .Values.deployment.sshd.rootPath }}
 X11Forwarding no
 AllowTcpForwarding no
 PermitTTY no
