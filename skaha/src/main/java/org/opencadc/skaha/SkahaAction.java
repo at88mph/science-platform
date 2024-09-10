@@ -74,7 +74,6 @@ import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.auth.PosixPrincipal;
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
@@ -87,7 +86,6 @@ import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opencadc.auth.PosixGroup;
 import org.opencadc.auth.PosixMapperClient;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.gms.IvoaGroupClient;
@@ -141,6 +139,7 @@ public abstract class SkahaAction extends RestAction {
     protected String homedir;
     protected String scratchdir;
     protected String skahaTld;
+    protected boolean gpuEnabled; 
     public List<String> harborHosts = new ArrayList<>();
     protected String skahaUsersGroup;
     protected String skahaHeadlessGroup;
@@ -149,18 +148,19 @@ public abstract class SkahaAction extends RestAction {
     protected String skahaHeadlessPriortyClass;
     protected int maxUserSessions;
     protected final PosixMapperConfiguration posixMapperConfiguration;
+   
 
 
     protected boolean skahaCallbackFlow = false;
-    protected String callbackSessionId = null;
     protected String callbackSupplementalGroups = null;
-    protected String xAuthTokenSkaha = null;
 
 
     public SkahaAction() {
         server = System.getenv("skaha.hostname");
         homedir = System.getenv("skaha.homedir");
         skahaTld = System.getenv("SKAHA_TLD");
+        gpuEnabled = Boolean.parseBoolean(System.getenv("GPU_ENABLED"));
+      
         scratchdir = System.getenv("skaha.scratchdir");
         String harborHostList = System.getenv("skaha.harborhosts");
         if (harborHostList == null) {
@@ -278,10 +278,10 @@ public abstract class SkahaAction extends RestAction {
 
     private void initiateSkahaCallbackFlow(Subject currentSubject, URI skahaUsersUri) {
         skahaCallbackFlow = true;
-        xAuthTokenSkaha = syncInput.getHeader(X_AUTH_TOKEN_SKAHA);
+        final String xAuthTokenSkaha = syncInput.getHeader(X_AUTH_TOKEN_SKAHA);
         log.debug("x-auth-token-skaha header is " + xAuthTokenSkaha);
         try {
-            callbackSessionId = SkahaAction.getTokenTool().validateToken(xAuthTokenSkaha, skahaUsersUri, WriteGrant.class);
+            final String callbackSessionId = SkahaAction.getTokenTool().validateToken(xAuthTokenSkaha, skahaUsersUri, WriteGrant.class);
 
             final Session session = SessionDAO.getSession(null, callbackSessionId, skahaTld);
             this.posixPrincipal = session.getPosixPrincipal();

@@ -7,8 +7,12 @@ metadata:
     canfar-net-sessionName: "${skaha.sessionname}"
     canfar-net-sessionType: "${skaha.sessiontype}"
     canfar-net-userid: "${skaha.userid}"
+    kueue.x-k8s.io/queue-name: skaha-workload-queue-headless
   name: "${skaha.jobname}"
 spec:
+  parallelism: 1
+  completions: 1
+  {{ template "skaha.job.nodeSelector" . }}
   activeDeadlineSeconds: 1209600
   ttlSecondsAfterFinished: 3600
   backoffLimit: 0
@@ -31,11 +35,7 @@ spec:
       initContainers:
       {{ template "skaha.job.initContainers" . }}
       securityContext:
-        runAsUser: ${skaha.posixid}
-        runAsGroup: ${skaha.posixid}
-        fsGroup: ${skaha.posixid}
-        supplementalGroups: [${skaha.supgroups}]
-        runAsNonRoot: true
+        {{ template "skaha.job.securityContext" . }}
       ${headless.priority}
       containers:
       - name: "${skaha.jobname}"
@@ -59,7 +59,7 @@ spec:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
         workingDir: "${SKAHA_TLD}/home/${skaha.userid}"
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "${software.requests.ram}"
@@ -68,7 +68,7 @@ spec:
           limits:
             memory: "${software.limits.ram}"
             cpu: "${software.limits.cores}"
-            nvidia.com/gpu: "${software.limits.gpus}"
+            ${software.limits.gpus}
             ephemeral-storage: "200Gi"
         volumeMounts:
         - mountPath: "/etc/passwd"

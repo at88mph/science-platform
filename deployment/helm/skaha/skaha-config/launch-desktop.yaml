@@ -7,8 +7,12 @@ metadata:
     canfar-net-sessionName: "${skaha.sessionname}"
     canfar-net-sessionType: "${skaha.sessiontype}"
     canfar-net-userid: "${skaha.userid}"
+    kueue.x-k8s.io/queue-name: skaha-workload-queue-interactive
   name: "${skaha.jobname}"
 spec:
+  parallelism: 1
+  completions: 1
+  {{ template "skaha.job.nodeSelector" . }}
   activeDeadlineSeconds: ${skaha.sessionexpiry}
   ttlSecondsAfterFinished: 86400
   template:
@@ -27,11 +31,7 @@ spec:
       imagePullSecrets:
       - name: ${software.imagesecret}
       securityContext:
-        runAsUser: ${skaha.posixid}
-        runAsGroup: ${skaha.posixid}
-        fsGroup: ${skaha.posixid}
-        supplementalGroups: [${skaha.supgroups}]
-        runAsNonRoot: true
+        {{ template "skaha.job.securityContext" . }}
       priorityClassName: uber-user-preempt-medium
       hostname: "${software.hostname}"
       initContainers:
@@ -56,13 +56,15 @@ spec:
           value: "1"
         - name: SKAHA_API_VERSION
           value: "v0"  
+        - name: DESKTOP_SESSION_APP_TOKEN
+          value: "${software.desktop.app.token}"
         securityContext:
           runAsUser: ${skaha.posixid}
           runAsGroup: ${skaha.posixid}
           allowPrivilegeEscalation: false
           runAsNonRoot: true
         image: ${software.imageid}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "1Gi"

@@ -69,7 +69,6 @@ package org.opencadc.skaha.session;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.AuthorizationToken;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -80,7 +79,6 @@ import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Logger;
 import org.opencadc.skaha.K8SUtil;
 import org.opencadc.skaha.SkahaAction;
-import org.opencadc.skaha.utils.CommandExecutioner;
 
 import javax.security.auth.Subject;
 import java.io.*;
@@ -173,36 +171,16 @@ public abstract class SessionAction extends SkahaAction {
         return "https://" + host + "/session/contrib/" + sessionID + "/";
     }
 
-    protected AuthorizationToken token(final Subject subject) {
-        return subject
-                .getPublicCredentials(AuthorizationToken.class)
-                .iterator()
-                .next();
-    }
-
-
+    /**
+     * Currently only injects a Proxy Certificate.
+     */
     protected void injectCredentials() {
-        final String username = posixPrincipal.username;
-        int posixId = getUID();
-        injectToken(username, posixId, xAuthTokenSkaha);
-        injectProxyCertificate(username);
+        injectProxyCertificate();
     }
 
-    private void injectToken(String username, int posixId, String token) {
-        // inject a token if available
-        try {
-            String userHomeDirectory = CommandExecutioner.createDirectoryIfNotExist(homedir, username);
-            CommandExecutioner.changeOwnership(userHomeDirectory, posixId, posixId);
-            String tokenDirectory = CommandExecutioner.createDirectoryIfNotExist(userHomeDirectory, ".token");
-            CommandExecutioner.changeOwnership(tokenDirectory, posixId, posixId);
-            String tokenFilePath = CommandExecutioner.createOrOverrideFile(tokenDirectory, ".skaha", token);
-            CommandExecutioner.changeOwnership(tokenFilePath, posixId, posixId);
-        } catch (Exception exception) {
-            log.debug("failed to inject token: " + exception.getMessage(), exception);
-        }
-    }
+    private void injectProxyCertificate() {
+        log.debug("injectProxyCertificate()");
 
-    private void injectProxyCertificate(String username) {
         // inject a delegated proxy certificate if available
         try {
             final LocalAuthority localAuthority = new LocalAuthority();
@@ -211,15 +189,13 @@ public abstract class SessionAction extends SkahaAction {
             // Should throw a NoSuchElementException if it's missing, but check here anyway.
             if (credServiceID != null) {
                 final RegistryClient registryClient = new RegistryClient();
-                final URL credServiceURL = registryClient.getServiceURL(credServiceID, Standards.CRED_PROXY_10,
-                                                                        AuthMethod.CERT);
+                final URL credServiceURL = registryClient.getServiceURL(credServiceID, Standards.CRED_PROXY_10, AuthMethod.CERT);
 
                 if (credServiceURL != null) {
                     final Subject currentSubject = AuthenticationUtil.getCurrentSubject();
                     final String proxyCert = Subject.doAs(currentSubject, (PrivilegedExceptionAction<String>) () -> {
                         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        final String userName =
-                                currentSubject.getPrincipals(HttpPrincipal.class).iterator().next().getName();
+                        final String userName = currentSubject.getPrincipals(HttpPrincipal.class).iterator().next().getName();
                         final URL certificateURL = new URL(credServiceURL.toExternalForm() + "/userid/" + userName);
                         final HttpGet download = new HttpGet(certificateURL, out);
                         download.setFollowRedirects(true);
@@ -231,13 +207,16 @@ public abstract class SessionAction extends SkahaAction {
                     // inject the proxy cert
                     log.debug("Running docker exec to insert cert");
 
-                    injectFile(proxyCert, Path.of(homedir, username, ".ssl", "cadcproxy.pem").toString());
+                    injectFile(proxyCert, Path.of(homedir, this.posixPrincipal.username, ".ssl", "cadcproxy.pem").toString());
+                    log.debug("injectProxyCertificate(): OK");
                 }
             }
         } catch (NoSuchElementException noSuchElementException) {
-            log.debug("Not using proxy certificates.  Skipping certificate injection...");
+            log.debug("Not using proxy certificates");
+            log.debug("injectProxyCertificate(): UNSUCCESSFUL");
         } catch (Exception e) {
             log.warn("failed to inject cert: " + e.getMessage(), e);
+            log.debug("injectProxyCertificate(): UNSUCCESSFUL");
         }
     }
 
