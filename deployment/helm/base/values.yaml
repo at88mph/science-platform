@@ -1,9 +1,18 @@
 kubernetesClusterDomain: cluster.local
+
 skaha:
   namespace: skaha-system
 skahaWorkload:
   namespace: skaha-workload
-  
+
+platformInstances:
+  canfar:
+    apiNamespace: canfar-skaha-system
+    sessionsNamespace: canfar-skaha-workload
+  cansrc:
+    apiNamespace: cansrc-skaha-system
+    sessionsNamespace: cansrc-skaha-workload
+
 secrets:
   # default-certificate:  # Match the default-certificate name in traefik.tlsStore.default.defaultCertificate.secretName
   # For server domains with self-signed certificates, add the Base64 encoded file content here.
@@ -20,7 +29,7 @@ traefik:
       # format: json
       # By default, the level is set to ERROR.
       # -- Alternative logging levels are DEBUG, PANIC, FATAL, ERROR, WARN, and INFO.
-      level: ERROR
+      level: WARN
     access:
       # -- To enable access logs
       enabled: false

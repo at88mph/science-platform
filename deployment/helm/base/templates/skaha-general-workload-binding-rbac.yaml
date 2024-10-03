@@ -1,10 +1,12 @@
+{{ $currContext := . }}
+{{- range .Values.platformInstances }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: skaha-general-workload-binding
-  namespace: {{ .Values.skahaWorkload.namespace }}
+  namespace: {{ .sessionsNamespace }}
   labels:
-  {{- include "base.labels" . | nindent 4 }}
+  {{- include "base.labels" $currContext | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -13,8 +15,8 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: Group
   name: canfarops
-  namespace: '{{ .Release.Namespace }}'
+  namespace: '{{ $.Release.Namespace }}'
 - kind: ServiceAccount
   name: 'skaha'
-  namespace: {{ .Values.skaha.namespace }}
-  
+  namespace: {{ .apiNamespace }}
+{{- end }}

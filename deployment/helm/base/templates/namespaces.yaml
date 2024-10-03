@@ -1,10 +1,13 @@
+{{- range .Values.platformInstances }}
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ .Values.skaha.namespace }}
+  name: {{ .apiNamespace }}
+
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ .Values.skahaWorkload.namespace }}
+  name: {{ .sessionsNamespace }}
+{{- end }}
