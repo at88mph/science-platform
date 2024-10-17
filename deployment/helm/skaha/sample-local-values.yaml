@@ -3,6 +3,10 @@
 # Skaha web service deployment
 deployment:
   hostname: example.org # Change this
+
+  # enable SSL
+  tlsSecretName: tls-certs-example-org
+
   skaha:
     imagePullPolicy: IfNotPresent
     # Space delimited list of allowed Image Registry hosts.  These hosts should match the hosts in the User Session images.

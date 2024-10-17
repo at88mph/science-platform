@@ -16,6 +16,13 @@ skahaWorkload:
 # Skaha web service deployment
 deployment:
   hostname: myhost.example.com  # Change this!
+
+  # Secret containing the tls.crt ant tls.key to be served.  This can come from a Let's Encrypt
+  # certificate, or a manual certificate with self-signed certificates.
+  #
+  # kubectl -n {namespace} create secret generic example-tls-secret --from-file="tls.crt=/path/to/file.crt" --from-file="tls.key=/path/to/file.key"
+  #
+  # tlsSecretName:
   skaha:
     image: images.opencadc.org/platform/skaha:0.21.3
     imagePullPolicy: Always

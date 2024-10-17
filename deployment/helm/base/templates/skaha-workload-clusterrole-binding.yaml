@@ -10,8 +10,6 @@ rules:
   # objects is "secrets"
   resources: ["pods", "jobs", "middlewares", "services"]
   verbs: ["get", "watch", "list", "create"]
-
-{{- range .Values.platformInstances }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 # This cluster role binding allows anyone in the "manager" group to read secrets in any namespace.
@@ -20,10 +18,9 @@ metadata:
   name: skaha-workload-role-binding
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .apiNamespace }}
+  namespace: {{ .Values.skaha.namespace }}
   name: skaha # Name is case sensitive
 roleRef:
   kind: ClusterRole
   name: skaha-workload-role
   apiGroup: rbac.authorization.k8s.io
-{{- end }}

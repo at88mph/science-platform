@@ -6,6 +6,12 @@ metadata:
   annotations:
     spec.ingressClassName: traefik
 spec:
+  {{- if .Values.deployment.tlsSecretName }}
+  tls:
+  - hosts:
+      - {{ .Values.deployment.hostname }}
+    secretName: {{ .Values.deployment.tlsSecretName }}
+  {{- end }}
   rules:
   - host: {{ .Values.deployment.hostname }}
     http:
