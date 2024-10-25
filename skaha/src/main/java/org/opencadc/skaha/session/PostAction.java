@@ -101,6 +101,7 @@ import org.opencadc.skaha.K8SUtil;
 import org.opencadc.skaha.SkahaAction;
 import org.opencadc.skaha.context.ResourceContexts;
 import org.opencadc.skaha.image.Image;
+import org.opencadc.skaha.utils.CommandExecutioner;
 import org.opencadc.skaha.utils.PosixCache;
 
 /**
@@ -633,15 +634,16 @@ public class PostAction extends SessionAction {
             log.debug("Create service result: " + createResult);
         }
 
-        if (ingressPath != null) {
-            byte[] ingressBytes = Files.readAllBytes(Paths.get(ingressPath));
-            String ingressString = new String(ingressBytes, StandardCharsets.UTF_8);
-            ingressString = SessionJobBuilder.setConfigValue(ingressString, SKAHA_SESSIONID, sessionID);
-            ingressString = SessionJobBuilder.setConfigValue(ingressString, SKAHA_HOSTNAME, K8SUtil.getHostName());
-            jsonLaunchFile = super.stageFile(ingressString);
-            launchCmd = new String[] {"kubectl", "create", "--namespace", k8sNamespace, "-f", jsonLaunchFile};
-            createResult = execute(launchCmd);
-            log.debug("Create ingress result: " + createResult);
+        final SessionIngressBuilder sessionIngressBuilder = SessionIngressBuilder.fromSessionID(this.sessionID)
+                                                                                 .withType(type)
+                                                                                 .withIngressClassName("traefik")
+                                                                                 .withNamespace(K8SUtil.getWorkloadNamespace());
+
+        if (!type.equals(SessionAction.SESSION_TYPE_HEADLESS)) {
+            final String ingressLaunchFile = super.stageFile(sessionIngressBuilder.build());
+            final String[] ingressLaunchCommand = new String[] {"kubectl", "create", "--namespace", k8sNamespace, "-f", ingressLaunchFile};
+            final String ingressCreateResult = execute(ingressLaunchCommand);
+            log.debug("Create ingress result: " + ingressCreateResult);
         }
     }
 
