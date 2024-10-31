@@ -10,8 +10,6 @@ import io.kubernetes.client.openapi.models.V1IngressServiceBackend;
 import io.kubernetes.client.openapi.models.V1IngressSpec;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ServiceBackendPort;
-import io.kubernetes.client.proto.Meta;
-import io.kubernetes.client.proto.V1Networking;
 import io.kubernetes.client.util.Yaml;
 import java.util.Collections;
 
@@ -19,7 +17,7 @@ import java.util.Collections;
 public class SessionIngressBuilder {
     private static final String NAME_TEMPLATE = "skaha-%s-ingress-%s";
     private static final String PATH_TEMPLATE = "/session/%s/%s/";
-    private static final String SERVICE_NAME_TEMPLATE = "session-%s-svc-%s";
+    private static final String SERVICE_NAME_TEMPLATE = "skaha-%s-svc-%s";
     private static final String PATH_MATCH_TYPE = "Prefix";
     private static final String CLASSNAME_ANNOTATIONS_KEY = "spec.ingressClassName";
 
@@ -77,26 +75,7 @@ public class SessionIngressBuilder {
     }
 
     /**
-     *apiVersion: traefik.containo.us/v1alpha1
-     * kind: IngressRoute
-     * metadata:
-     *   name: skaha-notebook-ingress-${skaha.sessionid}
-     *   annotations:
-     *     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-     *     traefik.ingress.kubernetes.io/router.tls: "true"
-     * spec:
-     *   entryPoints:
-     *     - web
-     *     - websecure
-     *   routes:
-     *   - kind: Rule
-     *     match: Host(`${skaha.hostname}`) && PathPrefix(`/session/notebook/${skaha.sessionid}/`)
-     *     services:
-     *     - kind: Service
-     *       name: skaha-notebook-svc-${skaha.sessionid}
-     *       port: 8888
-     *       scheme: http
-     *
+     * Build the Ingress object.  The result will be the YAML dump of the Ingress object.
      * @return  String YAML representation of the Ingress.
      */
     String build() {
@@ -125,7 +104,7 @@ public class SessionIngressBuilder {
             .pathType(SessionIngressBuilder.PATH_MATCH_TYPE)
             .backend(new V1IngressBackend()
                 .service(new V1IngressServiceBackend()
-                    .name(String.format(SessionIngressBuilder.SERVICE_NAME_TEMPLATE, this.sessionID, this.type))
+                    .name(String.format(SessionIngressBuilder.SERVICE_NAME_TEMPLATE, this.type, this.sessionID))
                     .port(new V1ServiceBackendPort().number(8888))
                 )
             )
