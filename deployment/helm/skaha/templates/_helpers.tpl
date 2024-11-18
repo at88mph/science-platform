@@ -60,3 +60,81 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+USER SESSION TEMPLATE DEFINITIONS
+*/}}
+
+{{/*
+The init containers for the launch scripts.
+*/}}
+{{- define "skaha.job.initContainers" -}}
+      - name: backup-original-passwd-groups
+        image: ${software.imageid}
+        command: ["/bin/sh", "-c", "cp /etc/passwd /etc-passwd/passwd-orig && cp /etc/group /etc-group/group-orig"]
+        volumeMounts:
+        - mountPath: "/etc-passwd"
+          name: etc-passwd
+        - mountPath: "/etc-group"
+          name: etc-group
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+      - name: init-users-groups
+        image: redis:7-alpine
+        command: ["/init-users-groups/init-users-groups.sh"]
+        env:
+        - name: HOME
+          value: "${SKAHA_TLD}/home/${skaha.userid}"
+        - name: REDIS_URL
+          value: "redis://{{ .Release.Name }}-redis-master.{{ .Values.skaha.namespace }}.svc.{{ .Values.kubernetesClusterDomain }}:6379"
+        volumeMounts:
+        - mountPath: "/etc-passwd"
+          name: etc-passwd
+        - mountPath: "/etc-group"
+          name: etc-group
+        - mountPath: "/init-users-groups"
+          name: init-users-groups
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+{{- with .Values.deployment.extraHosts }}
+      hostAliases:
+{{- range $extraHost := . }}
+        - ip: {{ $extraHost.ip }}
+          hostnames:
+            - {{ $extraHost.hostname }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+The affinity for Jobs.  This will import the YAML as defined by the user in the deployment.skaha.sessions.nodeAffinity stanza.
+*/}}
+{{- define "skaha.job.nodeAffinity" -}}
+{{- with .Values.deployment.skaha.sessions.nodeAffinity }}
+      affinity:
+        nodeAffinity:
+{{ . | toYaml | indent 10 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Common security context settings for User Session Jobs
+*/}}
+{{- define "skaha.job.securityContext" -}}
+        runAsUser: ${skaha.posixid} 
+        runAsGroup: ${skaha.posixid}
+        fsGroup: ${skaha.posixid}
+        supplementalGroups: [${skaha.supgroups}]
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+{{- end }}

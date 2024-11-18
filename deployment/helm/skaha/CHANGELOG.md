@@ -1,4 +1,38 @@
-# CHANGELOG for Skaha User Session API (Chart 0.4.3)
+# CHANGELOG for Skaha User Session API (Chart 0.9.0)
+
+## 2024.10.23 (0.9.0)
+- Add `x-skaha-registry-auth` request header support to set Harbor CLI secret (or other Image Registry secret)
+
+## 2024.10.18 (0.8.0)
+- Allow setting nodeAffinity values for proper scheduling.
+
+## 2024.10.10 (0.7.8)
+- Fix for client certificate injection
+
+## 2024.10.07 (0.7.3)
+- Fix for security context in image caching job
+
+## 2024.10.04 (0.7.2)
+- Fix to inject user client certificates properly
+
+## 2024.10.03 (0.7.1)
+- Small fix to ensure userinfo endpoint is obtained from the Identity Provider for applications using the StandardIdentityManager
+
+## 2024.09.20 (0.6.0)
+- Feature to allow mounting volumes into user sessions
+
+## 2024.09.19 (0.5.1)
+- Fix to add `headlessPriorityGroup` and `headlessPriorityClass` configurations
+
+## 2024.09.10
+- Enforce configuration by deployers by removing some default values
+- Sessions now contain their own stanza (`sessions:`)
+  - `deployment.skaha.maxUserSessions` is now `deployment.skaha.sessions.maxCount`
+  - `deployment.skaha.sessionExpiry` is now `deployment.skaha.sessions.expirySeconds`
+  - Added `deployment.skaha.sessions.minEphemeralStorage` and `deployment.skaha.sessions.maxEphemeralStorage`
+
+## 2024.09.04
+- Fix for Desktop Applications not starting due to API token being overwritten
 
 ## 2024.05.06
 - Small change to deploy on CADC infrastructure with CephFS quotas

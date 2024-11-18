@@ -7,8 +7,11 @@ metadata:
     canfar-net-sessionName: "${skaha.sessionname}"
     canfar-net-sessionType: "${skaha.sessiontype}"
     canfar-net-userid: "${skaha.userid}"
+    kueue.x-k8s.io/queue-name: skaha-workload-queue-headless
   name: "${skaha.jobname}"
 spec:
+  parallelism: 1
+  completions: 1
   activeDeadlineSeconds: 1209600
   ttlSecondsAfterFinished: 3600
   backoffLimit: 0
@@ -24,18 +27,14 @@ spec:
       automountServiceAccountToken: false
       enableServiceLinks: false
       restartPolicy: Never
-      ${skaha.schedulegpu}
       imagePullSecrets:
-      - name: ${software.imagesecret}
+        - name: ${software.imagesecret}
+      {{ template "skaha.job.nodeAffinity" . }}
       hostname: "${software.hostname}"
       initContainers:
       {{ template "skaha.job.initContainers" . }}
       securityContext:
-        runAsUser: ${skaha.posixid}
-        runAsGroup: ${skaha.posixid}
-        fsGroup: ${skaha.posixid}
-        supplementalGroups: [${skaha.supgroups}]
-        runAsNonRoot: true
+        {{ template "skaha.job.securityContext" . }}
       ${headless.priority}
       containers:
       - name: "${skaha.jobname}"
@@ -59,17 +58,17 @@ spec:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
         workingDir: "${SKAHA_TLD}/home/${skaha.userid}"
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "${software.requests.ram}"
             cpu: "${software.requests.cores}"
-            ephemeral-storage: "20Gi"
+            ephemeral-storage: "{{ .Values.deployment.skaha.sessions.minEphemeralStorage }}"
           limits:
             memory: "${software.limits.ram}"
             cpu: "${software.limits.cores}"
-            nvidia.com/gpu: "${software.limits.gpus}"
-            ephemeral-storage: "200Gi"
+            ${software.limits.gpus}
+            ephemeral-storage: "{{ .Values.deployment.skaha.sessions.maxEphemeralStorage }}"
         volumeMounts:
         - mountPath: "/etc/passwd"
           name: etc-passwd
@@ -77,24 +76,14 @@ spec:
         - mountPath: "/etc/group"
           name: etc-group
           subPath: group
-        - mountPath: "${SKAHA_TLD}"
-          name: cavern-volume
-          subPath: "cavern"
-        - mountPath: "/scratch"
-          name: scratch-dir
-          subPath: "${skaha.sessionid}"
+        {{ template "skaha.session.commonVolumeMounts" . }}
       volumes:
-      - name: cavern-volume
-        persistentVolumeClaim:
-          claimName: skaha-workload-cavern-pvc
+      - name: etc-group
+        emptyDir: { }
+      - name: etc-passwd
+        emptyDir: { }
       - name: init-users-groups
         configMap:
           name: init-users-groups-config
           defaultMode: 0777
-      - name: scratch-dir
-        emptyDir: {}
-      - name: etc-group
-        emptyDir: {}
-      - name: etc-passwd
-        emptyDir: {}
-
+      {{ template "skaha.session.commonVolumes" . }}

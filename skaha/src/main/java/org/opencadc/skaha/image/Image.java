@@ -74,20 +74,25 @@ import java.util.Set;
  *
  */
 public class Image {
-    
+
     private String id;
     private Set<String> types;
     private String digest;
-    
+
+    /**
+     * The following constructor is used by the ObjectMapper class for creating instances using reflection
+     */
+    public Image() {}
+
     public Image(String id, Set<String> types, String digest) {
         if (id == null) {
-            throw new IllegalArgumentException("id requried");
+            throw new IllegalArgumentException("id required");
         }
         if (types == null || types.isEmpty()) {
             throw new IllegalArgumentException("type required");
         }
         if (digest == null) {
-            throw new IllegalArgumentException("digest requried");
+            throw new IllegalArgumentException("digest required");
         }
         this.id = id;
         this.types = new HashSet<String>(types);
@@ -105,7 +110,7 @@ public class Image {
     public String getDigest() {
         return digest;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (o instanceof Image) {
@@ -124,16 +129,16 @@ public class Image {
             boolean found = false;
             for (String type : this.types) {
                 if (type.equals(iType)) {
-                   found = true;
-                   break;
+                    found = true;
+                    break;
                 }
             }
-            
+
             if (!found) {
                 return false;
             }
         }
-        
+
         return true;
     }
 }

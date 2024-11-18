@@ -1,11 +1,7 @@
 
-logLevel: debug
+logLevel: warn
 
 externalURL: https://images.canfar.net
-
-containerSecurityContext:
-  runAsGroup: 1001
-  runAsNonRoot: true
 
 podSecurityContext:
   fsGroup: 1001
@@ -46,24 +42,56 @@ ingress:
 #***************************************************
 notary:
   server: 
+    image:
+      registry: docker.io
+      repository: bitnami/harbor-notary-server-archived
+      tag: 2.7.1-debian-11-r6
     priorityClassName: uber-user-preempt-high
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: nvidia.com/gpu.count
-              operator: DoesNotExist
+            - key: skaha.opencadc.org/node-type
+              operator: In
+              values:
+              - service-node
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
 
-  signer: 
+  signer:
+    image:
+      registry: docker.io
+      repository: bitnami/harbor-notary-signer-archived
+      tag: 2.7.1-debian-11-r6
     priorityClassName: uber-user-preempt-high
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: nvidia.com/gpu.count
-              operator: DoesNotExist
+            - key: skaha.opencadc.org/node-type
+              operator: In
+              values:
+              - service-node
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
 
 #***************************************************
 portal:
@@ -73,19 +101,47 @@ portal:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
 
 #***************************************************
 chartmuseum:
+  image:
+    registry: docker.io
+    repository: bitnami/chartmuseum-archived
+    tag: 0.15.0-debian-11-r79
   priorityClassName: uber-user-preempt-high
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
 
 #***************************************************
 jobservice:
@@ -95,8 +151,20 @@ jobservice:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
 
 #***************************************************
 registry:
@@ -106,8 +174,32 @@ registry:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  server:
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
+  controller:
+     containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
 
 #***************************************************
 trivy:
@@ -117,8 +209,20 @@ trivy:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
 
 #***************************************************
 persistence:
@@ -163,10 +267,20 @@ core:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: nvidia.com/gpu.count
-            operator: DoesNotExist
-
-
+          - key: skaha.opencadc.org/node-type
+            operator: In
+            values:
+            - service-node
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
 
 #***************************************************
 postgresql:
@@ -178,14 +292,33 @@ postgresql:
     subPath: harbor-postgresql
 
   primary:
+    resources:
+      limits:
+        memory: 1Gi
+        cpu: 1
+      requests:
+        memory: 1Gi
+        cpu: 1
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
     priorityClassName: uber-user-preempt-high
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: nvidia.com/gpu.count
-              operator: DoesNotExist
+            - key: skaha.opencadc.org/node-type
+              operator: In
+              values:
+              - service-node
     volumes:
       - name: postgresql-extended-config
         configMap:
@@ -216,21 +349,44 @@ redis:
   enabled: true
 
   master:
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
     priorityClassName: uber-user-preempt-high
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: nvidia.com/gpu.count
-              operator: DoesNotExist
+            - key: skaha.opencadc.org/node-type
+              operator: In
+              values:
+              - service-node
     persistence:
       enabled: true
       storageClass: ""
       subPath: harbor-redis
 
   replica:
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
     persistence:
       enabled: true
       storageClass: ""
       subPath: harbor-redis
+      
