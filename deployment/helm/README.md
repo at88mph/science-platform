@@ -251,9 +251,6 @@ deployment:
     # Set the top-level-directory name that gets mounted at the root.
     # skahaTld: "/cavern"
 
-    # Set to true if your cluster supports GPU processing
-    gpuEnabled: false
-
     defaultQuotaGB: "10"
 
     # Space delimited list of allowed Image Registry hosts.  These hosts should match the hosts in the User Session images.
@@ -296,6 +293,21 @@ deployment:
     # The absolute URL of the IVOA Registry where services are registered
     registryURL: https://example.org/reg
 
+    # Optionally describe how this Pod will be scheduled using the nodeAffinity clause. This applies to Skaha itself.
+    # Note the different indentation level compared to the sessions.nodeAffinity.
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+    # See the [Sample Skaha Values file](skaha/sample-local-values.yaml).
+    # Example:
+    nodeAffinity:
+      # Only allow Skaha to run on specific Nodes.
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - my-special-node-host
+
     # Settings for User Sessions.  Sensible defaults supplied, but can be overridden.
     # For units of storage, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory.
     sessions:
@@ -303,6 +315,14 @@ deployment:
       maxCount: "3"  # Max number of sessions per user.
       minEphemeralStorage: "20Gi"   # The initial requested amount of ephemeral (local) storage.  Does NOT apply to Desktop sessions.
       maxEphemeralStorage: "200Gi"  # The maximum amount of ephemeral (local) storage to allow a Session to extend to.  Does NOT apply to Desktop sessions.
+
+      # When set to 'true' this flag will enable GPU node scheduling.  Don't forget to declare any related GPU configurations, if appropriate, in the nodeAffinity below!
+      # gpuEnabled: false
+
+      # Set the YAML that will go into the "affinity.nodeAffinity" stanza for Pod Spec in User Sessions.  This can be used to enable GPU scheduling, for example, 
+      # or to control how and where User Session Pods are scheduled.  This can be potentially dangerous unless you know what you are doing.
+      # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity
+      # nodeAffinity: {}
 
       # Mount CVMFS from the Node's mounted path into all User Sessions.
       extraVolumes:
@@ -426,7 +446,8 @@ deployment:
 
     # OIDC (IAM) server configuration.  These are required
     # oidc:
-      # Location of the OpenID Provider (OIdP), and where users will login
+    #
+    # Location of the OpenID Provider (OIdP), and where users will login
     #   uri: https://iam.example.org/
 
       # The Client ID as listed on the OIdP.  Create one at the uri above.
@@ -474,6 +495,19 @@ deployment:
       limits:
         memory: "1Gi"
         cpu: "500m"
+
+    # Optionally describe how this Pod will be scheduled using the nodeAffinity clause. This applies to Science Portal itself.
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+    # Example:
+    nodeAffinity:
+      # Only allow Science Portal to run on specific Nodes.
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - my-special-ui-host
 
   # Specify extra hostnames that will be added to the Pod's /etc/hosts file.  Note that this is in the
   # deployment object, not the sciencePortal one.
@@ -602,6 +636,19 @@ deployment:
         memory: "1Gi"
         cpu: "500m"
 
+    # Optionally describe how this Pod will be scheduled using the nodeAffinity clause. This applies to Cavern.
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+    # Example:
+    nodeAffinity:
+      # Only allow Cavern to run on specific Nodes.
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - my-special-api-host
+
   # Specify extra hostnames that will be added to the Pod's /etc/hosts file.  Note that this is in the
   # deployment object, not the cavern one.
   #
@@ -706,6 +753,19 @@ deployment:
       limits:
         memory: "1Gi"
         cpu: "500m"
+
+    # Optionally describe how this Pod will be scheduled using the nodeAffinity clause. This applies to the Storage UI Pod(s).
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+    # Example:
+    nodeAffinity:
+      # Only allow Storage UI to run on specific Nodes.
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - my-special-ui-host
 
   # Specify extra hostnames that will be added to the Pod's /etc/hosts file.  Note that this is in the
   # deployment object, not the storageUI one.

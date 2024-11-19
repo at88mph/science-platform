@@ -16,6 +16,11 @@ spec:
       labels:
         run: skaha-tomcat
     spec:
+{{- with .Values.deployment.skaha.nodeAffinity }}
+      affinity:
+        nodeAffinity:
+{{ . | toYaml | indent 10 }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -40,7 +45,7 @@ spec:
         - name: SKAHA_TLD
           value: "{{ .Values.deployment.skaha.skahaTld }}"
         - name: GPU_ENABLED
-          value: "{{ .Values.deployment.skaha.gpuEnabled }}"
+          value: "{{ .Values.deployment.skaha.sessions.gpuEnabled | default "false" }}"
         - name: skaha.homedir
           value: "{{ .Values.deployment.skaha.skahaTld }}/home"
         - name: skaha.namespace

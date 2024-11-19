@@ -10,9 +10,6 @@ deployment:
 
     # Root of shared storage
     skahaTld: "/cavern"
-    
-    # When set to 'true' this flag will enable GPU node scheduling.
-    gpuEnabled: false 
 
     # The group name to verify users against for permission to use the Science Platform.
     usersGroup: "ivo://example.org/gms?example/users-group-name"
@@ -34,6 +31,16 @@ deployment:
     # The Resource ID of the Service that contains the Posix Mapping information
     posixMapperResourceID: "ivo://example.org/posix-mapper"
 
+    # This applies to Skaha itself, not the User Sessions.  Meaning, this Pod will be scheduled on Nodes with the label.
+    # Note the different indentation level compared to the sessions.nodeAffinity.
+    nodeAffinity:
+      # Only allow Skaha to run on specific Nodes.
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: persistent-service-api-node
+            operator: Exists
+
     # Session settings.
     sessions:
       expirySeconds: "345600" # Four days
@@ -50,6 +57,19 @@ deployment:
           mountPath: "/cvmfs"   # Path to mount on the User Sesssion Pod.
           readOnly: false
           mountPropagation: HostToContainer
+
+      # When set to 'true' this flag will enable GPU node scheduling.
+      gpuEnabled: true
+
+      # Example nodeAffinity to ensure User Session Pods are NOT scheduled on API Nodes alongside Skaha, 
+      # for example, to ensure load does not affect them.
+      nodeAffinity:
+        # Only allow executions of User Sessions on specific Nodes.
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: persistent-service-api-node
+              operator: DoesNotExist
 
     # Resources provided to the Skaha service.
     resources:

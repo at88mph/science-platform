@@ -68,19 +68,12 @@
 package org.opencadc.skaha;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -106,7 +99,8 @@ public class DesktopAppLifecycleTest {
     public DesktopAppLifecycleTest() {
         try {
             RegistryClient regClient = new RegistryClient();
-            final URL sessionServiceURL = regClient.getServiceURL(SessionUtil.getSkahaServiceID(), Standards.PROC_SESSIONS_10, AuthMethod.TOKEN);
+            final URL sessionServiceURL = regClient.getServiceURL(
+                    SessionUtil.getSkahaServiceID(), Standards.PROC_SESSIONS_10, AuthMethod.TOKEN);
             sessionURL = new URL(sessionServiceURL.toString() + "/session");
             log.info("sessions URL: " + sessionURL);
 
@@ -122,23 +116,30 @@ public class DesktopAppLifecycleTest {
     public void testCreateDeleteDesktopApp() throws Exception {
         Subject.doAs(userSubject, (PrivilegedExceptionAction<Void>) () -> {
             // ensure that there is no active session
-            initialize();
+            SessionUtil.initializeCleanup(this.sessionURL);
 
             // create desktop session
-            final String desktopSessionID = SessionUtil.createSession(this.sessionURL, "inttest" + SessionAction.SESSION_TYPE_DESKTOP,
-                                                                      SessionUtil.getImageOfType(SessionAction.SESSION_TYPE_DESKTOP).getId());
+            final String desktopSessionID = SessionUtil.createSession(
+                    this.sessionURL,
+                    "inttest" + SessionAction.SESSION_TYPE_DESKTOP,
+                    SessionUtil.getImageOfType(SessionAction.SESSION_TYPE_DESKTOP)
+                            .getId(),
+                    SessionAction.SESSION_TYPE_DESKTOP);
 
-            final Session desktopSession = SessionUtil.waitForSession(this.sessionURL, desktopSessionID, Session.STATUS_RUNNING);
-            SessionUtil.verifySession(desktopSession, SessionAction.SESSION_TYPE_DESKTOP, "inttest" + SessionAction.SESSION_TYPE_DESKTOP);
+            final Session desktopSession =
+                    SessionUtil.waitForSession(this.sessionURL, desktopSessionID, Session.STATUS_RUNNING);
+            SessionUtil.verifySession(
+                    desktopSession, SessionAction.SESSION_TYPE_DESKTOP, "inttest" + SessionAction.SESSION_TYPE_DESKTOP);
 
             final URL desktopAppURL = new URL(this.sessionURL.toString() + "/" + desktopSession.getId() + "/app");
             log.info("desktop-app URL: " + desktopAppURL);
 
             // create a terminal desktop-app
-            String desktopAppID = SessionUtil.createDesktopAppSession(SessionUtil.getDesktopAppImageOfType("/skaha/terminal").getId(),
-                                                                      desktopAppURL);
+            String desktopAppID = SessionUtil.createDesktopAppSession(
+                    SessionUtil.getDesktopAppImageOfType("/skaha/terminal").getId(), desktopAppURL);
 
-            Session appSession = SessionUtil.waitForDesktopApplicationSession(desktopAppURL, desktopAppID, Session.STATUS_RUNNING);
+            Session appSession =
+                    SessionUtil.waitForDesktopApplicationSession(desktopAppURL, desktopAppID, Session.STATUS_RUNNING);
 
             Assert.assertNotNull("no desktop app", desktopAppID);
             Assert.assertEquals("Wrong app session ID", appSession.getAppId(), desktopAppID);
@@ -156,9 +157,10 @@ public class DesktopAppLifecycleTest {
             // create desktop-app specifying resources
             int cores = 1;
             int ram = 4;
-            desktopAppID = SessionUtil.createDesktopAppSession(SessionUtil.getDesktopAppImageOfType("/skaha/terminal").getId(),
-                                                               desktopAppURL, cores, ram);
-            appSession = SessionUtil.waitForDesktopApplicationSession(desktopAppURL, desktopAppID, Session.STATUS_RUNNING);
+            desktopAppID = SessionUtil.createDesktopAppSession(
+                    SessionUtil.getDesktopAppImageOfType("/skaha/terminal").getId(), desktopAppURL, cores, ram);
+            appSession =
+                    SessionUtil.waitForDesktopApplicationSession(desktopAppURL, desktopAppID, Session.STATUS_RUNNING);
 
             Assert.assertEquals("wrong number of cores", cores, Integer.parseInt(appSession.getRequestedCPUCores()));
             Assert.assertEquals("wrong amount of ram", ram + "G", appSession.getRequestedRAM());
@@ -174,22 +176,5 @@ public class DesktopAppLifecycleTest {
 
             return null;
         });
-    }
-
-    private void initialize() throws Exception {
-        List<Session> sessions = SessionUtil.getSessions(this.sessionURL);
-        for (Session session : sessions) {
-            if (session.getType().equals(SessionAction.TYPE_DESKTOP_APP)) {
-                // delete desktop-app
-                String sessionID = session.getId();
-                final URL desktopAppURL = new URL(sessionURL.toString() + "/" + sessionID + "/app");
-                SessionUtil.deleteDesktopApplicationSession(desktopAppURL, session.getAppId());
-            } else {
-                // delete session
-                SessionUtil.deleteSession(sessionURL, session.getId());
-            }
-        }
-        sessions = SessionUtil.getSessions(this.sessionURL);
-        Assert.assertEquals("zero sessions #1", 0, sessions.size());
     }
 }
