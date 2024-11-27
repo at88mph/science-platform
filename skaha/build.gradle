@@ -4,6 +4,7 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0'
     id 'java'
     id 'jacoco'
+    id 'org.jetbrains.dokka' version '1.6.0'
 }
 
 repositories {
@@ -54,35 +55,62 @@ dependencies {
     testImplementation 'junit:junit:[4.13,)'
     testImplementation 'org.json:json:20231013'
     testImplementation 'org.mockito:mockito-core:5.12.0'
+
 }
 
 spotless {
   java {
+    // Interpret all files as utf-8
+    encoding 'UTF-8'
+    // Only require formatting of files that diff from main
+    ratchetFrom 'origin/main'
     // Use the default importOrder configuration
     importOrder()
     // Remove unused imports
     removeUnusedImports()
     // Google Java Format, Android Open Source Project style which uses 4 spaces for indentation
-    palantirJavaFormat()
+    palantirJavaFormat('2.50.0').formatJavadoc(true)
     // Format annotations on a single line
     formatAnnotations()
   }
-  yaml {
-    target '**/*.yaml, **/*.yml, ../.github/workflows/*.yml'
-  }
-  format 'misc', {
-    target '**/*.gradle'
-    trimTrailingWhitespace()
-    indentWithSpaces(4)
-    endWithNewline()
-  }
 }
+check.dependsOn spotlessCheck
 
+// Create Java Code Coverage Reports
 jacocoTestReport {
     reports {
         xml.enabled true
         html.enabled true
     }
 }
-
 check.dependsOn jacocoTestReport
+
+// Create JavaDoc
+javadoc {
+    destinationDir = file("${buildDir}/docs/javadoc")
+}
+
+// Create Java Documentation using Dokka for Github Markdown and HTML
+tasks.dokkaGfm.configure {
+    outputDirectory.set(file("${buildDir}/docs/dokka/gfm"))
+    dokkaSourceSets {
+        register("main") {
+            sourceRoots.from(file("src/main/java"))
+        }
+    }
+}
+tasks.dokkaHtml.configure {
+    outputDirectory.set(file("${buildDir}/docs/dokka/html"))
+    dokkaSourceSets {
+        register("main") {
+            sourceRoots.from(file("src/main/java"))
+        }
+      configureEach {
+        jdkVersion.set(11)
+        sourceLink {
+        localDirectory.set(file("src/main/java"))
+        remoteUrl.set("https://github.com/opencadc/science-platform/tree/main/skaha/src/main/java")
+      }
+      }
+    }
+}
