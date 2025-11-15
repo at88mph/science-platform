@@ -1,6 +1,11 @@
 package org.opencadc.skaha.session;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Path;
+
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONWriter;
 import org.opencadc.skaha.K8SUtil;
 
 public enum SessionType {
@@ -76,5 +81,16 @@ public enum SessionType {
 
     public boolean isDesktop() {
         return this == DESKTOP;
+    }
+
+    void toJSON(@NotNull final Writer writer) throws IOException {
+        final JSONWriter jsonWriter = new JSONWriter(writer);
+        jsonWriter.object();
+
+        try {
+            jsonWriter.key("name").value(this.applicationName);
+        } finally {
+            jsonWriter.endObject();
+        }
     }
 }

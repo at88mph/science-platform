@@ -15,6 +15,7 @@ import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1Status;
+
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
 import org.apache.log4j.Logger;
 import org.opencadc.skaha.K8SUtil;
 import org.opencadc.skaha.KubernetesJob;
@@ -38,6 +40,15 @@ public class SessionDAO {
     private static final String SESSION_TYPE_LABEL = "canfar-net-sessionType";
 
     static final String NONE = "<none>";
+
+    static Session create(final UserSession<? extends SessionType> userSession) throws Exception {
+        final ApiClient client = Configuration.getDefaultApiClient();
+        final BatchV1Api batchV1Api = new BatchV1Api(client);
+        final V1Job sessionJobSpec = userSession.toJobSpec(userSession);
+        final V1Job v1Job = batchV1Api.createNamespacedJob(K8SUtil.getWorkloadNamespace(), sessionJobSpec).execute();
+
+        return null;
+    }
 
     public static Session getSession(String forUserID, String sessionID) throws Exception {
         final List<Session> sessions = SessionDAO.getUserSessions(forUserID, sessionID, false);

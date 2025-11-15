@@ -4,6 +4,7 @@ import ca.nrc.cadc.util.StringUtil;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.Yaml;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,10 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.opencadc.skaha.K8SUtil;
 
-/** Class to interface with Kubernetes. */
+/**
+ * Class to interface with Kubernetes.
+ */
 public class SessionJobBuilder {
     private static final Logger LOGGER = Logger.getLogger(SessionJobBuilder.class);
 
@@ -26,7 +31,9 @@ public class SessionJobBuilder {
     static final String JOB_RESOURCE_FLEXIBLE_LABEL_KEY = "opencadc.org/canfar-job-flexible";
     static final String JOB_RESOURCE_FIXED_LABEL_KEY = "opencadc.org/canfar-job-fixed";
 
-    /** Configuration for the queue to use. */
+    /**
+     * Configuration for the queue to use.
+     */
     private final Map<String, String> parameters = new HashMap<>();
 
     private final Path jobFilePath;
@@ -51,7 +58,8 @@ public class SessionJobBuilder {
         return new SessionJobBuilder(jobFilePath);
     }
 
-    @NotNull private static Map<String, String> getOrCreateJobLabels(V1Job job) {
+    @NotNull
+    private static Map<String, String> getOrCreateJobLabels(V1Job job) {
         final V1ObjectMeta jobMetadata = Objects.requireNonNullElse(job.getMetadata(), new V1ObjectMeta());
         final Map<String, String> labels = Objects.requireNonNullElse(jobMetadata.getLabels(), new HashMap<>());
         jobMetadata.setLabels(labels);
@@ -133,7 +141,7 @@ public class SessionJobBuilder {
     /**
      * Build a single parameter into this builder's parameter map.
      *
-     * @param key The key to find.
+     * @param key   The key to find.
      * @param value The value to replace with.
      * @return This SessionJobBuilder, never null.
      */
@@ -169,9 +177,23 @@ public class SessionJobBuilder {
         return buildJob(jobFileString);
     }
 
+    V1Job buildJob(final UserSession<? extends SessionType> userSession) throws IOException {
+        org.yaml.snakeyaml.Yaml yaml = new org.yaml.snakeyaml.Yaml();
+
+        final V1Job launchJob = (V1Job) Yaml.load(Path.of(String.format(
+                "%s/config/job-template.yaml",
+                K8SUtil.getWorkingDirectory())).toFile());
+        SessionJobBuilder.mergeResourceLabels(launchJob);
+        mergeQueue(launchJob);
+        mergeAffinity(launchJob);
+        mergeImagePullSecret(launchJob);
+
+        return launchJob;
+    }
+
     private String buildJob(final String jobFileString) throws IOException {
         final V1Job launchJob = (V1Job) Yaml.load(jobFileString);
-        mergeResourceLabels(launchJob);
+        SessionJobBuilder.mergeResourceLabels(launchJob);
         mergeQueue(launchJob);
         mergeAffinity(launchJob);
         mergeImagePullSecret(launchJob);
@@ -179,7 +201,7 @@ public class SessionJobBuilder {
         return Yaml.dump(launchJob);
     }
 
-    private void mergeResourceLabels(final V1Job launchJob) {
+    private static void mergeResourceLabels(final V1Job launchJob) {
         final V1JobSpec jobSpec = Objects.requireNonNullElse(launchJob.getSpec(), new V1JobSpec());
         final V1PodSpec podSpec =
                 Objects.requireNonNullElse(jobSpec.getTemplate().getSpec(), new V1PodSpec());
@@ -311,8 +333,9 @@ public class SessionJobBuilder {
         }
     }
 
-    @NotNull private static V1ResourceRequirements getResourceRequirements(V1PodSpec podTemplateSpec) {
-        final V1Container container = podTemplateSpec.getContainers().get(0);
+    @NotNull
+    private static V1ResourceRequirements getResourceRequirements(V1PodSpec podTemplateSpec) {
+        final V1Container container = podTemplateSpec.getContainers().getFirst();
         final V1ResourceRequirements resourceRequirements =
                 Objects.requireNonNullElse(container.getResources(), new V1ResourceRequirements());
         container.setResources(resourceRequirements);
