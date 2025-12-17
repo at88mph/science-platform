@@ -451,10 +451,7 @@ public class PostAction extends SessionAction {
             this.userStorageClient.ensureDesktopUserHomePreparation(owner);
         }
 
-        final Integer majorVersion = K8SUtil.getMajorImageVersion(image);
-        final boolean isLegacyCARTA = (type == SessionType.CARTA && (majorVersion == null || majorVersion < 5));
-
-        SessionJobBuilder sessionJobBuilder = SessionJobBuilder.fromPath(type.getJobConfigPath(isLegacyCARTA))
+        SessionJobBuilder sessionJobBuilder = SessionJobBuilder.fromPath(type.getJobConfigPath())
                 .withGPUEnabled(this.gpuEnabled)
                 .withGPUCount(gpus)
                 .withQueue(QueueConfiguration.fromType(type.name())) // Can be null.
@@ -491,8 +488,6 @@ public class PostAction extends SessionAction {
             if (imageVersion.startsWith("5")) {
                 final String connectURLPrefix = SessionURLBuilder.cartaSession(
                                 K8SUtil.getSessionsHostName(), this.sessionID)
-                        .withVersion5Path(true)
-                        .withAlternateSocket(false)
                         .build();
                 final String connectURLPath = URI.create(connectURLPrefix).getPath();
                 sessionJobBuilder = sessionJobBuilder.withParameter(
@@ -531,7 +526,7 @@ public class PostAction extends SessionAction {
         // API is in place, we can swap this out with a proper Java client API.
         // TODO: Use the Kubernetes Java client to create Service objects.
         if (type.supportsService()) {
-            byte[] serviceBytes = Files.readAllBytes(type.getServiceConfigPath(isLegacyCARTA));
+            byte[] serviceBytes = Files.readAllBytes(type.getServiceConfigPath());
             String serviceString = new String(serviceBytes, StandardCharsets.UTF_8);
             serviceString = SessionJobBuilder.setConfigValue(serviceString, PostAction.SKAHA_SESSIONID, this.sessionID);
             serviceString =
@@ -552,7 +547,7 @@ public class PostAction extends SessionAction {
         // TODO: Use the Kubernetes Gateway API to create Ingresses.
         // TODO: Use the Kubernetes Java client to create Gateway API objects.
         if (type.supportsIngress()) {
-            byte[] ingressBytes = Files.readAllBytes(type.getIngressConfigPath(isLegacyCARTA));
+            byte[] ingressBytes = Files.readAllBytes(type.getIngressConfigPath());
             String ingressString = new String(ingressBytes, StandardCharsets.UTF_8);
             ingressString = SessionJobBuilder.setConfigValue(ingressString, PostAction.SKAHA_SESSIONID, this.sessionID);
             ingressString = SessionJobBuilder.setConfigValue(
